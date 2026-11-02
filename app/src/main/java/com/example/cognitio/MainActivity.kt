@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -34,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -83,9 +85,18 @@ fun CognitioApp() {
             }
         }
     ) {
-        Scaffold(modifier = Modifier.fillMaxSize(), containerColor = backgroundColor) { innerPadding ->
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = backgroundColor
+        ) { innerPadding ->
             when (currentDestination) {
-                AppDestinations.HOME -> HomeScreen(Modifier.padding(30.dp).border(width = 2.dp, color = Color.Blue).padding(5.dp))
+                AppDestinations.HOME -> HomeScreen(
+                    Modifier
+                        .padding(30.dp)
+                        .border(width = 2.dp, color = Color.Blue)
+                        .padding(5.dp)
+                )
+
                 AppDestinations.RESULTS -> ResultsScreen(Modifier.padding(innerPadding))
                 AppDestinations.SETTINGS -> SettingsScreen(Modifier.padding(innerPadding))
 
@@ -106,11 +117,10 @@ enum class AppDestinations(
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier) {
-    var showHello by remember { mutableStateOf(false) }
-    if (showHello) {
-        PVASAT(modifier = modifier)
-    }
-    else {
+    var showPvasat by remember { mutableStateOf(false) }
+    if (showPvasat) {
+        PVASAT(modifier = modifier, onExit = { showPvasat = false })
+    } else {
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -119,7 +129,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
         ) {
             Text("Ez a Főoldal", fontSize = 50.sp)
 
-            Button(onClick = { showHello = true }, modifier = Modifier.size(200.dp)) {
+            Button(onClick = { showPvasat = true }, modifier = Modifier.size(200.dp)) {
                 Text("SHOW", fontSize = 25.sp)
             }
 
@@ -136,67 +146,121 @@ fun ResultsScreen(modifier: Modifier = Modifier) {
 
 
 @Composable
-fun PVASAT(modifier: Modifier = Modifier) {
+fun PVASAT_Start(num: Int) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text("Kezdoszam: $num", fontSize = 60.sp)
+    }
+}
+
+@Composable
+fun PVASAT_End(num: Int, clickFun: () -> Unit ) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            "Vegso Pontszam: $num",
+            fontSize = 40.sp
+        )
+        Button(onClick = { clickFun() }, modifier = Modifier.size(200.dp)) {
+            Text("SHOW", fontSize = 25.sp)
+        }
+    }
+}
+
+
+@Composable
+fun PVASAT(modifier: Modifier = Modifier, onExit: () -> Unit) {
     var kivalasztott by remember { mutableStateOf<Int?>(null) }
     var current by remember { mutableIntStateOf(Random.nextInt(1, 10)) }
-    var prev by remember {mutableIntStateOf(0)}
-    var potentialcur = 0
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(3000.milliseconds)
-            prev = current
-            potentialcur = Random.nextInt(1, 10)
-            while (potentialcur == current) {
-                potentialcur = Random.nextInt(1, 10)
+    var prev by remember { mutableIntStateOf(0) }
+    var potentialcur: Int
+    var showGame by remember { mutableStateOf(false) }
+    var showEnd by remember { mutableStateOf(false) }
+    var score by remember { mutableIntStateOf(0) }
+    var didchose by remember { mutableStateOf(false) }
+    if (!showEnd) {
+        if (!showGame) {
+            PVASAT_Start(num = current)
+            LaunchedEffect(Unit) {
+                delay(3000.milliseconds)
+                showGame = true
             }
-            current = potentialcur
-            kivalasztott = null
-        }
-    }
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-    Text(current.toString(), fontSize = 50.sp)
-    Text(prev.toString(), fontSize = 50.sp)
-    Spacer(modifier = Modifier.height(30.dp))
-    LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-    horizontalArrangement = Arrangement.spacedBy(5.dp),
-    verticalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
-        items((3..18).toList()) { szam ->
-            val aktiv = kivalasztott == szam
+        } else {
+            LaunchedEffect(Unit) {
+                repeat(10) {
+                    didchose = false
+                    prev = current
+                    potentialcur = Random.nextInt(1, 10)
+                    while (potentialcur == current) {
+                        potentialcur = Random.nextInt(1, 10)
+                    }
+                    current = potentialcur
+                    kivalasztott = null
+                    delay(3000.milliseconds)
+                }
+                showEnd = true
+            }
+            Column(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                Text(current.toString(), fontSize = 50.sp)
+                //Text(prev.toString(), fontSize = 50.sp)
+                Spacer(modifier = Modifier.height(30.dp))
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    horizontalArrangement = Arrangement.spacedBy(5.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    items((3..17).toList()) { szam ->
 
-            Button(
+                        val aktiv = kivalasztott == szam
 
-                onClick = { kivalasztott = szam },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1.3f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (aktiv) {
-                        if (kivalasztott == prev + current){
-                            Color.Green
-                        }
-                        else {
-                            Color.Red
+                        Button(
+
+                            onClick = {
+                                if (!didchose) {
+                                    kivalasztott = szam
+                                    if (kivalasztott == prev + current) {
+                                        score++
+                                    }
+                                    didchose = true
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1.3f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (aktiv) {
+                                    if (kivalasztott == prev + current) {
+                                        Color.Green
+
+                                    } else {
+                                        Color.Red
+                                    }
+                                } else
+                                    MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = if (aktiv)
+                                    MaterialTheme.colorScheme.onPrimary
+                                else
+                                    MaterialTheme.colorScheme.onSecondaryContainer
+                            ),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text(szam.toString(), fontSize = 30.sp)
                         }
                     }
-                    else
-                        MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = if (aktiv)
-                        MaterialTheme.colorScheme.onPrimary
-                    else
-                        MaterialTheme.colorScheme.onSecondaryContainer
-                ),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text(szam.toString(), fontSize = 30.sp)
+                }
             }
         }
-    }
+    } else {
+        PVASAT_End(num = score, clickFun = onExit)
     }
 }
 
