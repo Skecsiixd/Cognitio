@@ -1,6 +1,7 @@
 package com.example.cognitio
 
 import android.os.Bundle
+import android.os.SystemClock
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -31,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -140,8 +142,83 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun ResultsScreen(modifier: Modifier = Modifier) {
+    var showPVT by remember { mutableStateOf(false) }
+    if (showPVT) {
+        PVT()
+    } else {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Text("Ez az eredmeny oldal xd", fontSize = 30.sp)
+
+            Button(onClick = { showPVT = true }, modifier = Modifier.size(200.dp)) {
+                Text("SHOW", fontSize = 25.sp)
+            }
 
 
+        }
+    }
+
+}
+
+
+@Composable
+fun PVT() {
+    var showTest by remember { mutableStateOf(false) }
+    var greenReflex by remember { mutableStateOf(false) }
+    var greentime by remember { mutableLongStateOf(0) }
+    var presstime by remember { mutableLongStateOf(0) }
+    var finaltime by remember { mutableLongStateOf(0) }
+    if (!showTest) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                "Keszen allsz a REAKCIOTESZTRE? $finaltime", fontSize = 20.sp
+            )
+            Button(onClick = { showTest = true }, modifier = Modifier.size(200.dp)) {
+                Text("SHOW", fontSize = 25.sp)
+            }
+        }
+    } else {
+        LaunchedEffect(Unit) {
+            val time = Random.nextInt(1000, 4500)
+            delay(time.milliseconds)
+            greenReflex = true
+            greentime = SystemClock.elapsedRealtime()
+        }
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Button(
+                onClick = {
+                    if (greenReflex) {
+                        showTest = false
+                        greenReflex = false
+                        presstime = SystemClock.elapsedRealtime()
+                        finaltime = presstime - greentime
+                    }
+                },
+                modifier = Modifier.size(200.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (greenReflex) {
+                        Color.Green
+                    } else {
+                        Color.Red
+                    }
+
+                )
+            ) {
+
+            }
+        }
+    }
 }
 
 
@@ -156,7 +233,7 @@ fun PVASAT_Start(num: Int) {
 }
 
 @Composable
-fun PVASAT_End(num: Int, clickFun: () -> Unit ) {
+fun PVASAT_End(num: Int, clickFun: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
