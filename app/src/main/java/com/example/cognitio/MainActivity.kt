@@ -144,7 +144,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 fun ResultsScreen(modifier: Modifier = Modifier) {
     var showPVT by remember { mutableStateOf(false) }
     if (showPVT) {
-        PVT()
+        PVT { showPVT = false }
     } else {
         Column(
             modifier = modifier
@@ -166,58 +166,94 @@ fun ResultsScreen(modifier: Modifier = Modifier) {
 
 
 @Composable
-fun PVT() {
+fun PVT_End(score: Long, fail: Boolean, clickFun: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (!fail) {
+            Text(
+                "Vegso Pontszam: $score",
+                fontSize = 40.sp
+            )
+            Button(onClick = { clickFun() }, modifier = Modifier.size(200.dp)) {
+                Text("SHOW", fontSize = 25.sp)
+            }
+        } else {
+            Text(
+                "YOU FAILED",
+                fontSize = 40.sp
+            )
+            Button(onClick = { clickFun() }, modifier = Modifier.size(200.dp)) {
+                Text("SHOW", fontSize = 25.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun PVT(onExit: () -> Unit) {
     var showTest by remember { mutableStateOf(false) }
     var greenReflex by remember { mutableStateOf(false) }
     var greentime by remember { mutableLongStateOf(0) }
     var presstime by remember { mutableLongStateOf(0) }
     var finaltime by remember { mutableLongStateOf(0) }
-    if (!showTest) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                "Keszen allsz a REAKCIOTESZTRE? $finaltime", fontSize = 20.sp
-            )
-            Button(onClick = { showTest = true }, modifier = Modifier.size(200.dp)) {
-                Text("SHOW", fontSize = 25.sp)
+    var showEnd by remember { mutableStateOf(false) }
+    var failed by remember { mutableStateOf(false) }
+    if (!showEnd) {
+        if (!showTest) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Keszen allsz a REAKCIOTESZTRE?", fontSize = 20.sp
+                )
+                Button(onClick = { showTest = true }, modifier = Modifier.size(200.dp)) {
+                    Text("SHOW", fontSize = 25.sp)
+                }
+            }
+        } else {
+            LaunchedEffect(Unit) {
+                val time = Random.nextInt(1000, 4500)
+                delay(time.milliseconds)
+                greenReflex = true
+                greentime = SystemClock.elapsedRealtime()
+            }
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Button(
+                    onClick = {
+                        if (greenReflex) {
+                            showEnd = true
+                            greenReflex = false
+                            presstime = SystemClock.elapsedRealtime()
+                            finaltime = presstime - greentime
+                        } else {
+                            showEnd = true
+                            failed = true
+                        }
+                    },
+                    modifier = Modifier.size(200.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (greenReflex) {
+                            Color.Green
+                        } else {
+                            Color.Red
+                        }
+
+                    )
+                ) {
+
+                }
             }
         }
     } else {
-        LaunchedEffect(Unit) {
-            val time = Random.nextInt(1000, 4500)
-            delay(time.milliseconds)
-            greenReflex = true
-            greentime = SystemClock.elapsedRealtime()
-        }
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Button(
-                onClick = {
-                    if (greenReflex) {
-                        showTest = false
-                        greenReflex = false
-                        presstime = SystemClock.elapsedRealtime()
-                        finaltime = presstime - greentime
-                    }
-                },
-                modifier = Modifier.size(200.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (greenReflex) {
-                        Color.Green
-                    } else {
-                        Color.Red
-                    }
-
-                )
-            ) {
-
-            }
-        }
+        PVT_End(finaltime, failed, onExit)
     }
 }
 
