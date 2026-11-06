@@ -24,6 +24,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults.colors
@@ -48,6 +49,13 @@ import com.example.cognitio.ui.theme.CognitioTheme
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.milliseconds
+import java.text.Normalizer
+
+private val ACCENT_REGEX = "\\p{Mn}+".toRegex()
+
+fun String.normalizeWord(): String =
+    Normalizer.normalize(this.trim().lowercase(), Normalizer.Form.NFD)
+        .replace(ACCENT_REGEX, "")
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -164,6 +172,146 @@ fun ResultsScreen(modifier: Modifier = Modifier) {
 
 }
 
+
+@Composable
+fun Word_Play() {
+    val words: List<String> = listOf(
+        "kutya",
+        "macska",
+        "medve",
+        "nyúl",
+        "róka",
+        "farkas",
+        "disznó",
+        "liba",
+        "béka",
+        "szarvas",
+        "kenyér",
+        "alma",
+        "sajt",
+        "tojás",
+        "körte",
+        "répa",
+        "lekvár",
+        "tészta",
+        "paprika",
+        "uborka",
+        "asztal",
+        "szék",
+        "ablak",
+        "lámpa",
+        "tükör",
+        "kulcs",
+        "függöny",
+        "szőnyeg",
+        "polc",
+        "párna",
+        "kabát",
+        "cipő",
+        "sapka",
+        "nadrág",
+        "zokni",
+        "kesztyű",
+        "szoknya",
+        "ruha",
+        "csizma",
+        "pulóver",
+        "kalapács",
+        "fűrész",
+        "kapa",
+        "olló",
+        "létra",
+        "vödör",
+        "lapát",
+        "seprű",
+        "csákány",
+        "reszelő",
+        "virág",
+        "fenyő",
+        "tölgy",
+        "rózsa",
+        "nyárfa",
+        "bokor",
+        "tulipán",
+        "moha",
+        "kaktusz",
+        "gyökér",
+        "templom",
+        "torony",
+        "kastély",
+        "iskola",
+        "piac",
+        "pékség",
+        "sziget",
+        "kert",
+        "pince",
+        "hegy",
+        "autó",
+        "busz",
+        "vonat",
+        "hajó",
+        "repülő",
+        "bicikli",
+        "traktor",
+        "villamos",
+        "csónak",
+        "kamion",
+        "ceruza",
+        "könyv",
+        "füzet",
+        "radír",
+        "papír",
+        "tábla",
+        "táska",
+        "naptár",
+        "vonalzó",
+        "tinta",
+        "zongora",
+        "gitár",
+        "hegedű",
+        "trombita",
+        "fuvola",
+        "tuba",
+        "klarinét",
+        "csengő",
+        "hárfa",
+        "cimbalom",
+    )
+    var selectedWords by rememberSaveable { mutableStateOf(words.shuffled().take(6)) }
+    var text by rememberSaveable { mutableStateOf("") }
+    var correct by remember { mutableStateOf(false) }
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        selectedWords.forEach {
+            Text(it, fontSize = 30.sp)
+        }
+        Button(
+            onClick = {
+                correct = selectedWords.any { it.normalizeWord() == text.normalizeWord() }
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (correct) {
+                    Color.Green
+                } else {
+                    Color.Red
+                }
+            )
+        ) {
+            Text("check")
+        }
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            label = { Text("Írd be a szót") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+
+}
 
 @Composable
 fun PVT_End(score: Long, fail: Boolean, clickFun: () -> Unit) {
@@ -379,7 +527,7 @@ fun PVASAT(modifier: Modifier = Modifier, onExit: () -> Unit) {
 
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
-    Text("Itt vannak a Beállítások", modifier = modifier)
+    Word_Play()
 }
 
 /*@Preview(showBackground = true)
