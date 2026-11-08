@@ -278,39 +278,57 @@ fun Word_Play() {
         "cimbalom",
     )
     var selectedWords by rememberSaveable { mutableStateOf(words.shuffled().take(6)) }
-    var text by rememberSaveable { mutableStateOf("") }
-    var correct by remember { mutableStateOf(false) }
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        selectedWords.forEach {
-            Text(it, fontSize = 30.sp)
-        }
-        Button(
-            onClick = {
-                correct = selectedWords.any { it.normalizeWord() == text.normalizeWord() }
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (correct) {
-                    Color.Green
-                } else {
-                    Color.Red
-                }
-            )
-        ) {
-            Text("check")
-        }
-        OutlinedTextField(
-            value = text,
-            onValueChange = { text = it },
-            label = { Text("Írd be a szót") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
 
+    var correct by remember { mutableStateOf(false) }
+    var test by remember { mutableStateOf(false) }
+    if (!test) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            selectedWords.forEach {
+                Text(it, fontSize = 30.sp)
+            }
+
+            Button(onClick = { test = true }) { }
+
+        }
+    } else {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Word_Play_Request(selectedWords)
+        }
+    }
+}
+
+@Composable
+fun Word_Play_Request(selected: List<String>) {
+    var text by rememberSaveable { mutableStateOf("") }
+    var correctWords by rememberSaveable { mutableStateOf(setOf<String>()) }
+
+    OutlinedTextField(
+        value = text,
+        onValueChange = { text = it },
+        label = { Text("Írd be a szót") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth()
+    )
+    Button(
+        onClick = {
+            if (selected.any { it.normalizeWord() == text.normalizeWord() }) {
+                correctWords = correctWords + text.normalizeWord()
+            }
+        },
+
+        ) {
+        Text("check")
+
+    }
+    Text(correctWords.size.toString(), fontSize = 50.sp)
 }
 
 @Composable
