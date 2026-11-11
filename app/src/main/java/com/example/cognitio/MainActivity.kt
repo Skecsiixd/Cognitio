@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,18 +16,28 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults.colors
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.cognitio.ui.theme.CognitioTheme
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,22 +54,30 @@ class MainActivity : ComponentActivity() {
 @PreviewScreenSizes
 @Composable
 fun CognitioApp() {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "main") {
+        composable("main") {
+            MainScaffold(onBeginTest = { navController.navigate("night_test") })
+        }
+        composable("night_test") {
+            NightTest()
+        }
+    }
+}
+
+@Composable
+private fun MainScaffold(onBeginTest: () -> Unit) {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
     val backgroundColor = Color(0xFFF7F1E5)
+
     NavigationSuiteScaffold(
         containerColor = backgroundColor,
-        navigationSuiteColors = colors(
-            backgroundColor
-        ),
+        navigationSuiteColors = colors(backgroundColor),
         navigationSuiteItems = {
             AppDestinations.entries.forEach {
                 item(
-                    icon = {
-                        Icon(
-                            painterResource(it.icon),
-                            contentDescription = it.label
-                        )
-                    },
+                    icon = { Icon(painterResource(it.icon), contentDescription = it.label) },
                     label = { Text(it.label) },
                     selected = it == currentDestination,
                     onClick = { currentDestination = it }
@@ -74,15 +91,12 @@ fun CognitioApp() {
         ) { innerPadding ->
             when (currentDestination) {
                 AppDestinations.HOME -> HomeScreen(
-                    Modifier
-                        .padding(30.dp)
-                        .border(width = 2.dp, color = Color.Blue)
-                        .padding(5.dp)
+                    onBeginTest = onBeginTest,
+                    modifier = Modifier.padding(innerPadding)
                 )
 
                 AppDestinations.RESULTS -> ResultsScreen(Modifier.padding(innerPadding))
                 AppDestinations.SETTINGS -> SettingsScreen(Modifier.padding(innerPadding))
-
             }
         }
     }
@@ -99,56 +113,103 @@ enum class AppDestinations(
 }
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
-    var showPvasat by remember { mutableStateOf(false) }
-    if (showPvasat) {
-        PVASAT(modifier = modifier, onExit = { showPvasat = false })
-    } else {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text("Ez a Főoldal", fontSize = 50.sp)
+fun ScreenTimeElement(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    var hasAccess by remember { mutableStateOf(hasUsageAccess(context)) }
+    var minutes by remember { mutableLongStateOf(0L) }
 
-            Button(onClick = { showPvasat = true }, modifier = Modifier.size(200.dp)) {
-                Text("SHOW", fontSize = 25.sp)
-            }
-
-
-        }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        hasAccess = hasUsageAccess(context)
+        if (hasAccess) minutes = todayScreenTimeMs(context) / 60_000
     }
+
+
+    if (hasAccess) {
+        Text("Mai képernyőidő: ${minutes / 60} óra ${minutes % 60} perc")
+    } else {
+        Text("HIBA: Nincs hozzáférés")
+
+    }
+
 }
 
 @Composable
-fun ResultsScreen(modifier: Modifier = Modifier) {
-    var showPVT by remember { mutableStateOf(false) }
-    if (showPVT) {
-        PVT { showPVT = false }
-    } else {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Text("Ez az eredmeny oldal xd", fontSize = 30.sp)
+fun HomeScreen(modifier: Modifier = Modifier, onBeginTest: () -> Unit) {
 
-            Button(onClick = { showPVT = true }, modifier = Modifier.size(200.dp)) {
-                Text("SHOW", fontSize = 25.sp)
-            }
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
 
-
+        ScreenTimeElement()
+        Button(onClick = { onBeginTest() }, modifier = Modifier.size(200.dp)) {
+            Text("BEGIN TEST", fontSize = 25.sp)
         }
     }
+
+
+}
+
+
+enum class GameDestination(
+    val label: String,
+
+    ) {
+    PVASAT("pvasat"),
+    PVT("pvt"),
+    WORDPLAY("wordplay"),
+
+}
+
+@Composable
+fun NightTest(modifier: Modifier = Modifier) {
+
+
+    var selectedWords by rememberSaveable { mutableStateOf(words.shuffled().take(6)) }
+    var showRequest by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(showRequest) {
+        if (!showRequest) {
+            delay(10_000) // 10 másodperc
+            showRequest = true
+        }
+    }
+
+    if (!showRequest) {
+        Word_Play(selectedWords)
+    } else {
+        PVASAT(modifier, { showRequest = false })
+    }
+}
+
+
+@Composable
+fun ResultsScreen(modifier: Modifier = Modifier) {
+
 
 }
 
 
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
-    Word_Play()
+    val context = LocalContext.current
+    var hasAccess by remember { mutableStateOf(hasUsageAccess(context)) }
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (hasAccess) {
+            Text("Van engedely!")
+        } else {
+            Text("Nincs engedely")
+            Button(onClick = { openUsageAccessSettings(context) }) {
+                Text("Használati hozzáférés engedélyezése")
+            }
+        }
+    }
 }
 
 /*@Preview(showBackground = true)

@@ -18,56 +18,51 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
 
+
 @Composable
-fun Word_Play() {
-    var selectedWords by rememberSaveable { mutableStateOf(words.shuffled().take(6)) }
+fun Word_Play(selectedWords: List<String>) {
 
-    var test by remember { mutableStateOf(false) }
-    if (!test) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            selectedWords.forEach {
-                Text(it, fontSize = 30.sp)
-            }
 
-            Button(onClick = { test = true }) { }
-
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        selectedWords.forEach {
+            Text(it, fontSize = 30.sp)
         }
-    } else {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Word_Play_Request(selectedWords)
-        }
+
+
     }
 }
+
 
 @Composable
 fun Word_Play_Request(selected: List<String>) {
     var text by rememberSaveable { mutableStateOf("") }
     var correctWords by rememberSaveable { mutableStateOf(setOf<String>()) }
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            label = { Text("Írd be a szót") },
+            singleLine = true,
+            keyboardActions = KeyboardActions(
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
 
-    OutlinedTextField(
-        value = text,
-        onValueChange = { text = it },
-        label = { Text("Írd be a szót") },
-        singleLine = true,
-        keyboardActions = KeyboardActions(
-        ),
-        modifier = Modifier.fillMaxWidth()
-    )
+        val match = selected.find { it.normalizeWord() == text.normalizeWord() }
+        if (match != null) {
+            correctWords = correctWords + match
+            text = ""
+        }
+        Text(correctWords.joinToString(", "))
 
-    val match = selected.find { it.normalizeWord() == text.normalizeWord() }
-    if (match != null) {
-        correctWords = correctWords + match
-        text = ""
+        Text(correctWords.size.toString(), fontSize = 50.sp)
     }
-    Text(correctWords.joinToString(", "))
-
-    Text(correctWords.size.toString(), fontSize = 50.sp)
 }
