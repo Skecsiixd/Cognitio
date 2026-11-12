@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults.colors
@@ -28,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,7 +64,7 @@ fun CognitioApp() {
             MainScaffold(onBeginTest = { navController.navigate("night_test") })
         }
         composable("night_test") {
-            NightTest()
+            NightTest { navController.popBackStack() }
         }
     }
 }
@@ -125,9 +128,9 @@ fun ScreenTimeElement(modifier: Modifier = Modifier) {
 
 
     if (hasAccess) {
-        Text("Mai képernyőidő: ${minutes / 60} óra ${minutes % 60} perc")
+        Text("Mai képernyőidő: ${minutes / 60} óra ${minutes % 60} perc", modifier = modifier)
     } else {
-        Text("HIBA: Nincs hozzáférés")
+        Text("HIBA: Nincs hozzáférés", modifier = modifier)
 
     }
 
@@ -142,46 +145,16 @@ fun HomeScreen(modifier: Modifier = Modifier, onBeginTest: () -> Unit) {
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-
-        ScreenTimeElement()
+        Text("Jo napot, felhasznalo!", fontSize = 20.sp)
+        ProvideTextStyle(TextStyle(fontSize = 24.sp)) {
+            ScreenTimeElement()
+        }
         Button(onClick = { onBeginTest() }, modifier = Modifier.size(200.dp)) {
             Text("BEGIN TEST", fontSize = 25.sp)
         }
     }
 
 
-}
-
-
-enum class GameDestination(
-    val label: String,
-
-    ) {
-    PVASAT("pvasat"),
-    PVT("pvt"),
-    WORDPLAY("wordplay"),
-
-}
-
-@Composable
-fun NightTest(modifier: Modifier = Modifier) {
-
-
-    var selectedWords by rememberSaveable { mutableStateOf(words.shuffled().take(6)) }
-    var showRequest by rememberSaveable { mutableStateOf(false) }
-
-    LaunchedEffect(showRequest) {
-        if (!showRequest) {
-            delay(10_000) // 10 másodperc
-            showRequest = true
-        }
-    }
-
-    if (!showRequest) {
-        Word_Play(selectedWords)
-    } else {
-        PVASAT(modifier, { showRequest = false })
-    }
 }
 
 
@@ -196,6 +169,9 @@ fun ResultsScreen(modifier: Modifier = Modifier) {
 fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var hasAccess by remember { mutableStateOf(hasUsageAccess(context)) }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { hasAccess = hasUsageAccess(context) }
+
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -212,6 +188,10 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     }
 }
 
-/*@Preview(showBackground = true)
+@Preview(showBackground = true)
 @Composable
-*/
+fun HomeScreenPreview() {
+    CognitioTheme {
+        HomeScreen(onBeginTest = {})
+    }
+}

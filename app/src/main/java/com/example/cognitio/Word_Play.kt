@@ -38,7 +38,7 @@ fun Word_Play(selectedWords: List<String>) {
 
 
 @Composable
-fun Word_Play_Request(selected: List<String>) {
+fun Word_Play_Request(selected: List<String>, onExit: () -> Unit) {
     var text by rememberSaveable { mutableStateOf("") }
     var correctWords by rememberSaveable { mutableStateOf(setOf<String>()) }
     Column(
@@ -64,5 +64,9 @@ fun Word_Play_Request(selected: List<String>) {
         Text(correctWords.joinToString(", "))
 
         Text(correctWords.size.toString(), fontSize = 50.sp)
+
+        Button(onClick = onExit) {
+            Text("EXIT")
+        }
     }
 }
