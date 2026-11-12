@@ -11,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,7 +37,11 @@ fun Word_Play(selectedWords: List<String>) {
 
 
 @Composable
-fun Word_Play_Request(selected: List<String>, onExit: () -> Unit) {
+fun Word_Play_Request(
+    selected: List<String>,
+    onFinished: (finalScore: Int) -> Unit,
+    onExit: () -> Unit
+) {
     var text by rememberSaveable { mutableStateOf("") }
     var correctWords by rememberSaveable { mutableStateOf(setOf<String>()) }
     Column(
@@ -64,7 +67,7 @@ fun Word_Play_Request(selected: List<String>, onExit: () -> Unit) {
         Text(correctWords.joinToString(", "))
 
         Text(correctWords.size.toString(), fontSize = 50.sp)
-
+        onFinished(correctWords.size)
         Button(onClick = onExit) {
             Text("EXIT")
         }

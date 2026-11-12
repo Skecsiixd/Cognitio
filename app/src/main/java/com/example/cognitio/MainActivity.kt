@@ -178,7 +178,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (hasAccess) {
-            Text("Van engedely!")
+            Text("Van engedely!", fontSize = 50.sp)
         } else {
             Text("Nincs engedely")
             Button(onClick = { openUsageAccessSettings(context) }) {

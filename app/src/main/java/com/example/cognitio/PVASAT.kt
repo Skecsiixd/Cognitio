@@ -63,7 +63,11 @@ fun PVASAT_End(num: Int, clickFun: () -> Unit) {
 
 
 @Composable
-fun PVASAT(modifier: Modifier = Modifier.Companion, onExit: () -> Unit) {
+fun PVASAT(
+    modifier: Modifier = Modifier.Companion,
+    onFinished: (finalScore: Int) -> Unit,
+    onExit: () -> Unit
+) {
     var kivalasztott by remember { mutableStateOf<Int?>(null) }
     var current by remember { mutableIntStateOf(Random.nextInt(1, 10)) }
     var prev by remember { mutableIntStateOf(0) }
@@ -150,5 +154,6 @@ fun PVASAT(modifier: Modifier = Modifier.Companion, onExit: () -> Unit) {
         }
     } else {
         PVASAT_End(num = score, clickFun = onExit)
+        onFinished(score)
     }
 }

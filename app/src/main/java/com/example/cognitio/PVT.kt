@@ -53,7 +53,7 @@ fun PVT_End(score: Long, fail: Boolean, clickFun: () -> Unit) {
 }
 
 @Composable
-fun PVT(onExit: () -> Unit) {
+fun PVT(onFinished: (finalScore: Long) -> Unit, onExit: () -> Unit) {
     var showTest by remember { mutableStateOf(false) }
     var greenReflex by remember { mutableStateOf(false) }
     var greentime by remember { mutableLongStateOf(0) }
@@ -114,5 +114,6 @@ fun PVT(onExit: () -> Unit) {
         }
     } else {
         PVT_End(finaltime, failed, onExit)
+        onFinished(finaltime)
     }
 }
