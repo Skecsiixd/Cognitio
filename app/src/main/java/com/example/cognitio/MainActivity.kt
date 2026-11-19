@@ -1,18 +1,15 @@
 package com.example.cognitio
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ProvideTextStyle
@@ -43,11 +40,9 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.cognitio.data.SupabaseProvider
 import com.example.cognitio.ui.theme.CognitioTheme
-import com.kizitonwose.calendar.compose.HorizontalCalendar
-import com.kizitonwose.calendar.compose.rememberCalendarState
-import com.kizitonwose.calendar.core.DayPosition
-import kotlinx.coroutines.delay
+import io.github.jan.supabase.auth.auth
 
 
 class MainActivity : ComponentActivity() {
@@ -146,6 +141,18 @@ fun ScreenTimeElement(modifier: Modifier = Modifier) {
 
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier, onBeginTest: () -> Unit) {
+
+    LaunchedEffect(Unit) {
+        try {
+            SupabaseProvider.ensureSignedIn()
+            Log.d(
+                "SUPA",
+                "Bejelentkezve: ${SupabaseProvider.client.auth.currentUserOrNull()?.email}"
+            )
+        } catch (e: Exception) {
+            Log.e("SUPA", "Hiba a bejelentkezésnél", e)
+        }
+    }
 
     Column(
         modifier = modifier

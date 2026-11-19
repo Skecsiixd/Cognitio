@@ -1,6 +1,15 @@
+import java.util.Properties   // ← új, legfelül
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)   // ← új
+}
+
+// ← új blokk: a local.properties beolvasása
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
 }
 
 android {
@@ -17,6 +26,28 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // ← új: a kulcsok elérhetők lesznek BuildConfig.* néven
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            "\"${localProps.getProperty("SUPABASE_URL", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_KEY",
+            "\"${localProps.getProperty("SUPABASE_KEY", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "APP_USER_EMAIL",
+            "\"${localProps.getProperty("APP_USER_EMAIL", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "APP_USER_PASSWORD",
+            "\"${localProps.getProperty("APP_USER_PASSWORD", "")}\""
+        )
     }
 
     buildTypes {
@@ -32,6 +63,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true   // ← új
     }
 }
 
@@ -46,6 +78,19 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation("com.kizitonwose.calendar:compose:2.10.1")
+
+    // ← új: ViewModel + állapot figyelése Composable-ben
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
+
+    // ← új: Supabase
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.2.6"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("io.ktor:ktor-client-android:3.4.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
@@ -53,5 +98,4 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    implementation("com.kizitonwose.calendar:compose:2.10.1")
 }
