@@ -19,10 +19,12 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaul
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,6 +45,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.cognitio.data.SupabaseProvider
 import com.example.cognitio.ui.theme.CognitioTheme
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
+import kotlinx.coroutines.launch
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 
 class MainActivity : ComponentActivity() {
@@ -142,17 +148,6 @@ fun ScreenTimeElement(modifier: Modifier = Modifier) {
 @Composable
 fun HomeScreen(modifier: Modifier = Modifier, onBeginTest: () -> Unit) {
 
-    LaunchedEffect(Unit) {
-        try {
-            SupabaseProvider.ensureSignedIn()
-            Log.d(
-                "SUPA",
-                "Bejelentkezve: ${SupabaseProvider.client.auth.currentUserOrNull()?.email}"
-            )
-        } catch (e: Exception) {
-            Log.e("SUPA", "Hiba a bejelentkezésnél", e)
-        }
-    }
 
     Column(
         modifier = modifier
@@ -172,6 +167,7 @@ fun HomeScreen(modifier: Modifier = Modifier, onBeginTest: () -> Unit) {
 
 }
 
+
 @Composable
 fun ResultsScreen(modifier: Modifier = Modifier) {
     Calendar(modifier = modifier)
@@ -189,6 +185,38 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val sessionStatus by SupabaseProvider.client.auth.sessionStatus.collectAsState()
+
+
+
+        when (val status = sessionStatus) {
+            is SessionStatus.Initializing -> Text("Betöltés...")
+            is SessionStatus.Authenticated ->
+                Text("Bejelentkezve: ${status.session.user?.email ?: "névtelen felhasználó"}")
+
+            is SessionStatus.NotAuthenticated -> Text("Nincs bejelentkezve")
+            is SessionStatus.RefreshFailure -> Text("Hálózati hiba, a munkamenet frissítése nem sikerült")
+        }
+
+        val scope = rememberCoroutineScope()
+
+        Button(onClick = {
+            scope.launch {
+                SupabaseProvider.client.auth.signOut()
+            }
+        }) {
+            Text("asd")
+        }
+        Button(onClick = {
+            scope.launch {
+                SupabaseProvider.ensureSignedIn()
+            }
+        }) {
+            Text("dasd")
+        }
+
+
+
         if (hasAccess) {
             Text("Van engedely!", fontSize = 50.sp)
         } else {

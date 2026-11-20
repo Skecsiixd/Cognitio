@@ -1,5 +1,6 @@
 package com.example.cognitio
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,12 +12,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
+import com.example.cognitio.data.SupabaseProvider
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 enum class GameDestination {
     PVASAT,
@@ -78,6 +82,27 @@ fun EndScreen(
     Correct_Words: Int,
     onExit: () -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        try {
+            SupabaseProvider.addTestResult(
+                "PVT",
+                PVT_Score.toDouble(),
+                java.time.LocalDate.now().toString()
+            )
+            SupabaseProvider.addTestResult(
+                "PVASAT",
+                PVASAT_Score.toDouble(),
+                java.time.LocalDate.now().toString()
+            )
+            SupabaseProvider.addTestResult(
+                "WORDPLAY",
+                Correct_Words.toDouble(),
+                java.time.LocalDate.now().toString()
+            )
+        } catch (e: Exception) {
+            Log.e("Supa", "Mentés hiba: ${e.message}", e)
+        }
+    }
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
