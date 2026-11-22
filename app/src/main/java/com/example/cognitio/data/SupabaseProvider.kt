@@ -7,6 +7,7 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
 
 object SupabaseProvider {
 
@@ -30,9 +31,16 @@ object SupabaseProvider {
     }
 
     suspend fun addTestResult(testType: String, score: Double, date: String) {
-        ensureSignedIn()
         client.from("Results").insert(
             TestResultInsert(testType, score, date)
         )
+    }
+
+    suspend fun getTestResults(): List<TestResult> {
+        return client.from("Results")
+            .select {
+                order("test_date", Order.DESCENDING)
+            }
+            .decodeList<TestResult>()
     }
 }

@@ -155,7 +155,7 @@ fun HomeScreen(modifier: Modifier = Modifier, onBeginTest: () -> Unit) {
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text("Jo napot, felhasznalo!", fontSize = 20.sp)
+        Text("Jo napot!", fontSize = 20.sp)
         ProvideTextStyle(TextStyle(fontSize = 24.sp)) {
             ScreenTimeElement()
         }
@@ -190,12 +190,12 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
 
         when (val status = sessionStatus) {
-            is SessionStatus.Initializing -> Text("Betöltés...")
+            is SessionStatus.Initializing -> Text("betoltes...")
             is SessionStatus.Authenticated ->
-                Text("Bejelentkezve: ${status.session.user?.email ?: "névtelen felhasználó"}")
+                Text("Bejelentkezve: ${status.session.user?.email ?: ""}")
 
-            is SessionStatus.NotAuthenticated -> Text("Nincs bejelentkezve")
-            is SessionStatus.RefreshFailure -> Text("Hálózati hiba, a munkamenet frissítése nem sikerült")
+            is SessionStatus.NotAuthenticated -> Text("nincs bejelentkezve")
+            is SessionStatus.RefreshFailure -> Text("hiba")
         }
 
         val scope = rememberCoroutineScope()
@@ -205,14 +205,14 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 SupabaseProvider.client.auth.signOut()
             }
         }) {
-            Text("asd")
+            Text("SIGN OUT")
         }
         Button(onClick = {
             scope.launch {
                 SupabaseProvider.ensureSignedIn()
             }
         }) {
-            Text("dasd")
+            Text("LOG IN (test)")
         }
 
 

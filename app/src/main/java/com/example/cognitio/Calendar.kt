@@ -1,5 +1,6 @@
 package com.example.cognitio
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,9 +20,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.cognitio.data.SupabaseProvider
+import com.example.cognitio.data.TestResult
 
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
@@ -39,7 +45,7 @@ fun Calendar(modifier: Modifier = Modifier) {
         composable("main") {
             CalendarElement(
                 onFinished = { passDate = it },
-                onBeginTest = { navController.navigate("night_test") })
+                onBegin = { navController.navigate("night_test") })
         }
         composable("night_test") {
             DatePage(modifier, passDate)
@@ -51,7 +57,7 @@ fun Calendar(modifier: Modifier = Modifier) {
 fun CalendarElement(
     modifier: Modifier = Modifier,
     onFinished: (Date: LocalDate?) -> Unit,
-    onBeginTest: () -> Unit
+    onBegin: () -> Unit
 ) {
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
 
@@ -73,9 +79,11 @@ fun CalendarElement(
                         .aspectRatio(1f)
                         .clip(CircleShape)
                         .clickable(enabled = day.position == DayPosition.MonthDate) {
-                            onBeginTest()
-                            selectedDate = day.date
-                            onFinished(selectedDate)
+                            if (LocalDate.now() >= day.date) {
+                                onBegin()
+                                selectedDate = day.date
+                                onFinished(selectedDate)
+                            }
                         }
                         .background(
                             color = if (isToday) Color.Red else Color.Transparent,
@@ -97,12 +105,44 @@ fun CalendarElement(
 
 @Composable
 fun DatePage(modifier: Modifier = Modifier, SelectedDate: LocalDate?) {
+    var results by remember { mutableStateOf<List<TestResult>>(emptyList()) }
+
+
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(SelectedDate.toString())
-        Text("Eredmenyek: ")
+        Text(SelectedDate.toString(), fontSize = 50.sp)
+        Text("Eredmenyek: ", fontSize = 30.sp)
+        LaunchedEffect(Unit) {
+            try {
+                results = SupabaseProvider.getTestResults()
+            } catch (e: Exception) {
+                Log.e("Supa", e.message.toString())
+            }
+        }
+
+        results.forEach {
+            if (it.testDate == SelectedDate.toString()) {
+                when (it.testType) {
+                    "PVT" -> Text(
+                        "Reakcioido atlaga: ${it.score.toInt()}ms",
+                        fontSize = 30.sp,
+                        fontStyle = FontStyle.Italic
+                    )
+
+                    "PVASAT" -> Text(
+                        "PVASAT pontszam: ${it.score.toInt()}", fontSize = 30.sp,
+                        fontStyle = FontStyle.Italic
+                    )
+
+                    "WORDPLAY" -> Text(
+                        "Megjegyzett szavak: ${it.score.toInt()}", fontSize = 30.sp,
+                        fontStyle = FontStyle.Italic
+                    )
+                }
+            }
+        }
     }
 }
